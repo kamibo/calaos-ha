@@ -6,12 +6,12 @@
 	],
 	"config_flow": true,
 	"dependencies": [],
-	"documentation": "https://github.com/willoma/calaos-ha",
+	"documentation": "https://github.com/kamibo/calaos-ha",
 	"integration_type": "device",
 	"iot_class": "local_polling",
-	"issue_tracker": "https://github.com/willoma/calaos-ha/issues",
+	"issue_tracker": "https://github.com/kamibo/calaos-ha/issues",
 	"requirements": [
-		"pycalaos==0.0.28"
+		"pycalaos @ git+https://github.com/kamibo/pycalaos.git@async"
 	],
-	"version": "0.2.10"
+	"version": "0.3"
 }

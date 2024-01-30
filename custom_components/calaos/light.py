@@ -22,12 +22,12 @@ class OutputLight(CalaosEntity, LightEntity):
     def is_on(self) -> bool:
         return self.item.state
 
-    def turn_on(self, **kwargs) -> None:
-        self.item.true()
+    async def turn_on(self, **kwargs) -> None:
+        await self.item.true()
         self.schedule_update_ha_state()
 
-    def turn_off(self, **kwargs) -> None:
-        self.item.false()
+    async def turn_off(self, **kwargs) -> None:
+        await self.item.false()
         self.schedule_update_ha_state()
 
 

@@ -22,6 +22,9 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class CalaosCoordinator:
+
+    _attr_should_poll = False
+
     def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry) -> None:
         self.hass = hass
         self.client = None
@@ -36,17 +39,9 @@ class CalaosCoordinator:
 
     async def connect(self) -> None:
         _LOGGER.debug("Connecting to %s", self.calaos_url)
-        self.client = await self.hass.async_add_executor_job(
-            Client, self.calaos_url, self.calaos_username, self.calaos_password
-        )
-
-    @callback
-    def stop_poller(self, *args) -> None:
-        _LOGGER.debug("Disconnecting and stopping the poller for %s", self.calaos_url)
-        if self.stopper:
-            self.stopper()
-        self.stopper = None
-        self.client = None
+        self.client = Client(self.calaos_url, self.calaos_username, self.calaos_password)
+        await self.client.init()
+        await self.client.reload_home()
 
     async def declare_noentity_devices(self) -> None:
         dev_registry = device_registry.async_get(self.hass)
@@ -87,20 +82,16 @@ class CalaosCoordinator:
     def items_by_gui_type(self, gui_type: str) -> list[Item]:
         return self.client.items_by_gui_type(gui_type)
 
-    async def poll(self, *args) -> None:
+    async def async_update(self) -> None:
         if not self.client:
             try:
                 await self.connect()
-            except (RemoteDisconnected, URLError) as ex:
-                _LOGGER.error(f"connection error before polling: {ex}")
-                self.client = None
-                return
             except Exception as ex:
                 _LOGGER.error(f"unknown error before polling: {ex}")
                 self.client = None
                 return
         try:
-            events = await self.hass.async_add_executor_job(self.client.poll)
+            events = await self.client.wait()
         except (RemoteDisconnected, URLError) as ex:
             _LOGGER.error(f"connection error while polling: {ex}")
             self.client = None
@@ -133,7 +124,3 @@ class CalaosCoordinator:
                                 CONF_TYPE: event_type,
                             },
                         )
-
-    async def start_poller(self) -> None:
-        _LOGGER.debug(f"Starting the poller for {self.calaos_url}")
-        self.stopper = async_track_time_interval(self.hass, self.poll, POLL_INTERVAL)
